@@ -44,6 +44,9 @@
   .btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(22,20,15,.22)}
   .btn-line{background:transparent;color:var(--ink);border:1px solid var(--ink)}
   .btn-line:hover{box-shadow:0 12px 28px rgba(22,20,15,.12)}
+  .btn-alert{background:var(--alert);color:#fff}
+  .btn-alert:hover{background:#b02f25;box-shadow:0 12px 28px rgba(201,55,44,.3)}
+  .hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 
   /* hero */
   .hero{position:relative;height:100vh;min-height:660px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
@@ -110,7 +113,12 @@
   .p-item p b{color:var(--ink);font-weight:500}
 
   /* relationship */
-  .rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:60px}
+  .who{margin-top:56px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:34px 36px;box-shadow:var(--shadow)}
+  .who h3{font-size:13px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--alert);margin-bottom:12px}
+  .who p{color:var(--dim);font-size:15.5px;margin-bottom:18px}
+  .who-chips{display:flex;flex-wrap:wrap;gap:10px}
+  .who-chips span{font-size:13.5px;font-weight:500;color:var(--ink);border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 16px}
+  .rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:26px}
   .rel-item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:34px 32px;box-shadow:var(--shadow);transition:transform .35s cubic-bezier(.2,.6,.2,1),box-shadow .35s}
   .rel-item:hover{transform:translateY(-6px);box-shadow:var(--shadow-lift)}
   .rel-item h3{font-size:18px;font-weight:600;letter-spacing:-.01em;margin-bottom:10px;padding-left:20px;position:relative}
@@ -177,7 +185,10 @@
     <div class="label">Incident readiness &amp; response</div>
     <h1>The first 48 hours shape everything that follows.</h1>
     <p class="hero-sub">A retained response partner for protocol and product teams. Prepared before the incident. Beside you during it. Calm throughout.</p>
-    <a class="btn" href="#contact">Book a no-obligation discovery call</a>
+    <div class="hero-ctas">
+      <a class="btn" href="#contact">Book a no-obligation discovery call</a>
+      <a class="btn btn-alert" href="/simulator.html">Try the incident simulation</a>
+    </div>
   </div>
 </header>
 
@@ -318,18 +329,35 @@
   <div class="sec-label rv">Working together</div>
   <h2 class="rv">A deliberately simple relationship.</h2>
   <p class="lede rv">To do this job well we have to be genuinely integrated: an extended set of resources for your team, not a vendor you call cold. The commercial model is designed to make that easy.</p>
+
+  <div class="who rv">
+    <h3>Who we work with</h3>
+    <p>Teams where trust is inseparable from the product, and where an incident becomes public fast:</p>
+    <div class="who-chips">
+      <span>Protocol foundations &amp; core infrastructure</span>
+      <span>Bridges &amp; cross-chain systems</span>
+      <span>Wallets &amp; custody products</span>
+      <span>DeFi applications</span>
+      <span>Staking &amp; validator businesses</span>
+      <span>Exchanges &amp; ecosystem entities</span>
+      <span>Investor-backed Web3 teams</span>
+      <span>Funds covering portfolio companies</span>
+      <span>High-trust digital products beyond Web3</span>
+    </div>
+  </div>
+
   <div class="rel-grid">
     <div class="rel-item rv d1">
-      <h3>One retainer, one monthly fee</h3>
-      <p>No hourly meters, no surprise line items. Readiness work every month, priority support when something is live. Extended recovery work is scoped separately and only when it becomes substantial.</p>
+      <h3>Simple terms, locked in</h3>
+      <p>The retainer covers both sides of the work: active readiness every month, and reactive priority response through the first 48 hours, locked in without exception. Work beyond that window, sustained recovery, postmortems, trust repair, is separate by design: scoped as a fixed block and agreed with you before it begins. The terms never change mid-incident.</p>
     </div>
     <div class="rel-item rv d2">
-      <h3>Clear SLAs, agreed upfront</h3>
-      <p>A defined activation channel, who can trigger it, response commitments, and what the first response window covers. Written down at onboarding so there is no ambiguity at 2am.</p>
+      <h3>Clear SLAs, and an incident hotline that's always answered</h3>
+      <p>A defined activation channel, who can trigger it, and what the first response window covers, written down at onboarding. At the center of it: a dedicated incident hotline, answered at any hour, on any day, in any timezone. Incidents don't keep office hours, so neither does activation.</p>
     </div>
     <div class="rel-item rv d1">
       <h3>Embedded before anything happens</h3>
-      <p>Onboarding in the first 30 days: leadership context, technical orientation, channel review, stakeholder map. Then a monthly rhythm that keeps us current as your product and team change.</p>
+      <p>Onboarding in the first 30 days: leadership context, technical orientation, channel review, stakeholder map. We integrate into your existing tooling and communication channels, so there's no new platform to adopt and no added admin. We work with our clients where they are, and a monthly rhythm keeps us current as your product and team change.</p>
     </div>
     <div class="rel-item rv d2">
       <h3>Capacity protected by design</h3>

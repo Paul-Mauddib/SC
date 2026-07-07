@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incident Simulations — First Forty-Eight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f5f1e9; --paper-2:#ede8dc; --card:#faf7f0;
+    --ink:#16140f; --dim:#655f50; --line:#dcd6c8; --alert:#c9372c;
+    --good:#3e7a4e;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(22,20,15,.05),0 12px 32px rgba(22,20,15,.07);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+
+  /* WebGL field — brand continuity from the homepage */
+  #bgfield{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+  nav, section{position:relative;z-index:1}
+
+  nav{position:sticky;top:0;z-index:20;background:rgba(245,241,233,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{max-width:1080px;margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
+  .logo{font-weight:600;font-size:15px}
+  .sim-clock{font-family:var(--mono);font-size:13px;color:var(--dim);display:flex;gap:14px;align-items:center}
+  .sim-clock b{color:var(--ink);font-weight:600}
+  .phase-chip{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--alert);border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--card)}
+
+  .btn{display:inline-block;background:var(--ink);color:var(--paper);padding:13px 26px;font-size:14.5px;font-weight:500;border-radius:999px;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;font-family:inherit}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(22,20,15,.18)}
+  .btn-line{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+
+  /* picker */
+  #picker{max-width:1080px;margin:0 auto;padding:80px 28px 110px;text-align:center}
+  .label{font-size:11.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:24px}
+  #picker h1{font-size:clamp(34px,5vw,52px);font-weight:600;letter-spacing:-.03em;line-height:1.06;max-width:18ch;margin:0 auto}
+  #picker .sub{color:var(--dim);font-size:18px;margin:24px auto 44px;max-width:52ch}
+  .scen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;text-align:left}
+  .scen-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px 28px;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .3s,box-shadow .3s}
+  .scen-card:hover{transform:translateY(-5px);box-shadow:0 2px 4px rgba(22,20,15,.06),0 20px 48px rgba(22,20,15,.12)}
+  .scen-card .k{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--alert);margin-bottom:10px}
+  .scen-card h3{font-size:20px;font-weight:600;letter-spacing:-.015em;margin-bottom:10px}
+  .scen-card p{color:var(--dim);font-size:15px;margin-bottom:18px;flex:1}
+  .scen-card .meta{font-size:12.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:14px;margin-bottom:18px}
+  .scen-card .meta b{color:var(--ink);font-weight:500}
+  .fiction{font-size:12.5px;color:var(--dim);max-width:60ch;margin:40px auto 0}
+
+  /* sim */
+  #sim{display:none;padding:36px 0 100px}
+  .sim-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:26px;align-items:start}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .panel-h{padding:14px 22px;border-bottom:1px solid var(--line);font-size:11.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+  .panel-h .live{color:var(--alert);display:flex;align-items:center;gap:7px}
+  .panel-h .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--alert);animation:pu 2s infinite}
+  @keyframes pu{0%,100%{opacity:1}50%{opacity:.25}}
+
+  #feed{max-height:560px;overflow-y:auto;padding:10px 0}
+  .inject{padding:13px 22px;display:grid;grid-template-columns:74px 1fr;gap:14px;opacity:0;transform:translateY(10px);animation:inj .5s forwards}
+  @keyframes inj{to{opacity:1;transform:none}}
+  .inject .t{font-family:var(--mono);font-size:12.5px;color:var(--alert);padding-top:2px;font-weight:500}
+  .inject .x{font-size:15.5px;color:var(--ink)}
+  .inject.sys .x{color:var(--dim)}
+  .inject.block .x{white-space:pre-line;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:13.5px}
+  .inject.good .t{color:var(--good)}
+
+  .facts{padding:18px 22px}
+  .facts .row{display:flex;justify-content:space-between;gap:18px;padding:8px 0;border-top:1px solid var(--line);font-size:14.5px}
+  .facts .row:first-child{border-top:none}
+  .facts .row span:first-child{color:var(--dim)}
+  .facts .row span:last-child{font-weight:500;text-align:right}
+  .facts .row span.bad{color:var(--alert)}
+
+  .decision{padding:24px}
+  .decision .dq{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--alert);margin-bottom:10px}
+  .decision h3{font-size:20px;font-weight:600;letter-spacing:-.01em;margin-bottom:18px;line-height:1.3}
+  .opt{display:block;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;cursor:pointer;font-family:inherit;font-size:14.5px;color:var(--ink);transition:border-color .2s,transform .2s,box-shadow .2s;line-height:1.5}
+  .opt:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:var(--shadow)}
+  .opt b{display:block;font-weight:600;margin-bottom:3px;font-size:15.5px}
+  .opt span{color:var(--dim);font-size:14.5px}
+  .opt.picked{border-color:var(--ink);background:var(--paper-2)}
+  .opt:disabled{cursor:default;opacity:.55}
+  .opt.picked:disabled{opacity:1}
+
+  .consequence{background:var(--paper-2);border:1px solid var(--line);border-left:3px solid var(--alert);border-radius:10px;padding:18px 20px;margin-top:6px;font-size:15.5px;color:var(--ink)}
+  .consequence .ch{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+  .continue{margin-top:16px;text-align:right}
+  .waiting{padding:24px;color:var(--dim);font-size:14px;display:flex;align-items:center;gap:12px}
+  .waiting::before{content:"";width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--alert);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* debrief */
+  #debrief{display:none;max-width:760px;margin:0 auto;padding:70px 28px 120px}
+  #debrief h1{font-size:clamp(30px,4.5vw,44px);font-weight:600;letter-spacing:-.025em;margin-bottom:8px}
+  #debrief .sub{color:var(--dim);margin-bottom:36px}
+  .profile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px 34px;box-shadow:var(--shadow);margin-bottom:26px}
+  .profile p{font-size:16px;margin-bottom:16px}
+  .profile p:last-child{margin-bottom:0}
+  .dims{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:26px}
+  .dim-row{display:grid;grid-template-columns:1fr auto 130px;gap:18px;align-items:center;padding:15px 26px;border-top:1px solid var(--line);font-size:14.5px}
+  .dim-row:first-child{border-top:none}
+  .dim-row .name{font-weight:500}
+  .dim-row .cat{font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-align:right}
+  .cat.Strong{color:var(--good)} .cat.Controlled{color:var(--ink)} .cat.Developing{color:#a5762a} .cat.Weak{color:var(--alert)}
+  .bar{height:6px;background:var(--paper-2);border-radius:3px;overflow:hidden;width:130px}
+  .bar i{display:block;height:100%;background:var(--ink);border-radius:3px;transition:width 1s ease}
+  .commercial{border-top:1px solid var(--line);padding-top:36px;margin-top:10px}
+  .commercial h2{font-size:24px;font-weight:600;letter-spacing:-.015em;margin-bottom:16px}
+  .commercial p{color:var(--dim);margin-bottom:16px;font-size:15.5px}
+  .commercial p b{color:var(--ink);font-weight:500}
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:24px}
+  .foot-note{font-size:12.5px;color:var(--dim);margin-top:36px}
+
+  @media(max-width:920px){
+    .scen-grid{grid-template-columns:1fr}
+    .sim-grid{grid-template-columns:1fr}
+    #feed{max-height:340px}
+    .sim-clock .scen{display:none}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bgfield"></canvas>
+
+<nav><div class="nav-in">
+  <a class="logo" href="https://first48.io">First Forty-Eight</a>
+  <div class="sim-clock" id="clockbar" style="display:none">
+    <span class="scen" id="org-name"></span>
+    <span class="phase-chip" id="phase-chip"></span>
+    <b id="sim-time"></b>
+  </div>
+</div></nav>
+
+<!-- ============ SCENARIO PICKER ============ -->
+<section id="picker">
+  <div class="label">Interactive simulations</div>
+  <h1>Inside the first 48 hours.</h1>
+  <p class="sub">Take the response lead's seat during a serious protocol incident. The technical team works the problem. Your job is to stop a technical incident becoming an organizational one. Five decisions, 3–5 minutes.</p>
+  <div class="scen-grid" id="scen-grid"></div>
+  <p class="fiction">These simulations are fictional and intended to demonstrate incident-response decision making. They are informed by patterns observed across publicly documented blockchain incidents and do not reproduce the complete facts or chronology of any individual event.</p>
+</section>
+
+<!-- ============ SIM ============ -->
+<section id="sim"><div class="wrap">
+  <div class="sim-grid">
+    <div>
+      <div class="panel">
+        <div class="panel-h"><span>Incident feed</span><span class="live">Live</span></div>
+        <div id="feed"></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel" style="margin-bottom:24px">
+        <div class="panel-h"><span>Situation</span><span id="sit-time"></span></div>
+        <div class="facts" id="facts"></div>
+      </div>
+      <div class="panel" id="decision-panel">
+        <div class="waiting" id="waiting">Incident developing…</div>
+        <div class="decision" id="decision" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ DEBRIEF ============ -->
+<section id="debrief">
+  <div class="label">Incident debrief</div>
+  <h1>Response profile</h1>
+  <p class="sub" id="db-sub"></p>
+  <div class="profile" id="db-profile"></div>
+  <div class="dims" id="db-dims"></div>
+  <div class="commercial">
+    <h2>Real incidents are harder than simulations.</h2>
+    <p>Information arrives out of sequence. Technical facts change. Users want answers. Investors call leadership. Partners need direction. Engineers need space to work.</p>
+    <p>Notice one more thing: in this simulation, the organization <b>found out in minutes</b> — because monitoring, escalation routes and an activation process existed before they were needed. Many real teams first hear about an incident from their users, days later. Building that readiness is where our work begins.</p>
+    <p>First Forty-Eight helps protocol and product teams prepare before the moment and maintain a disciplined response when it arrives. We do not replace your engineers, security specialists, lawyers or investigators. We help leadership keep those groups aligned, establish decision rhythm, communicate confirmed facts and move from live incident to controlled recovery.</p>
+    <div class="cta-row">
+      <a class="btn" href="mailto:jflanaganbriggs@gmail.com?subject=Discovery%20call%20request" onclick="track('service_cta_selected',{})">Book a no-obligation discovery call</a>
+      <button class="btn btn-line" onclick="backToPicker()">Try another scenario</button>
+    </div>
+    <p class="foot-note">This simulation is fictional. Its organizations, transactions, timelines, people and figures are invented. It is informed by patterns observed across publicly documented blockchain incidents.</p>
+  </div>
+</section>
+
+<script>
+/* ============================================================
+   ANALYTICS (stub — wire to your provider)
+============================================================ */
+function track(event, data){
+  (window.dataLayer = window.dataLayer || []).push(Object.assign({event}, data));
+  if(window.console) console.log('[analytics]', event, data || {});
+}
+track('simulation_viewed', {});
+
+/* ============================================================
+   SHARED DEBRIEF LANGUAGE
+============================================================ */
+const DIMENSIONS = {
+  commandDiscipline: 'Command discipline',
+  factDiscipline: 'Fact discipline',
+  responseCoordination: 'Response coordination',
+  stakeholderDiscipline: 'Stakeholder discipline',
+  recoveryReadiness: 'Recovery readiness'
+};
+const DEBRIEF = {
+  strong: {
+    commandDiscipline:'Your response established authority quickly. Naming an incident owner, opening a decision log and holding a fixed rhythm kept decisions moving as the incident expanded.',
+    factDiscipline:'You held the line between confirmed facts and active hypotheses. What was said publicly never had to be walked back.',
+    responseCoordination:'You kept technical work separated from stakeholder pressure. Parallel workstreams with named owners meant no front of the incident was left unowned.',
+    stakeholderDiscipline:'Stakeholders heard it from you first. Investors, partners and users each received the right information in the right order, on a cadence they could rely on.',
+    recoveryReadiness:'You converted the live response into an evidence-based recovery. Restoration was defined by explicit criteria and assurance, not by pressure.'
+  },
+  develop: {
+    commandDiscipline:'The clearest room to grow was in command discipline. Authority and decision rhythm formed later than the incident demanded, which let the response fragment while events were still expanding.',
+    factDiscipline:'The clearest room to grow was in fact discipline. The gap between what was known and what was acknowledged gave speculation a head start on the response team.',
+    responseCoordination:'The clearest room to grow was in coordination. Too much of the incident flowed through too few people, and some time-sensitive workstreams started late.',
+    stakeholderDiscipline:'The clearest room to grow was in stakeholder discipline. Some audiences received information late, inconsistently, or from other sources first.',
+    recoveryReadiness:'The clearest room to grow was in recovery readiness. The pressure to restore service ran slightly ahead of the evidence that it was safe to do so.'
+  }
+};
+
+/* ============================================================
+   SCENARIOS — content only; the engine below is generic
+============================================================ */
+const SCENARIOS = [
+
+/* ================= SCENARIO 1 ================= */
+{
+  scenarioId:'validator-compromise-v1',
+  title:'The Validator Compromise',
+  org:'ATLAS PROTOCOL',
+  blurb:'An unrecognized high-value withdrawal clears a cross-chain bridge with valid validator signatures. Something is very wrong, and it may still be happening.',
+  meta:'<b>Atlas Protocol</b> · cross-chain bridge · ≈$480M secured · 9 validators, 5-of-9 threshold',
+  detectionNote:'Atlas detects this in minutes only because automated withdrawal monitoring and escalation routes already exist. Many real teams first hear from their users, days later.',
+  steps:[
+  {
+    phase:'Activation', time:'09:47 UTC',
+    injects:[
+      {t:'09:17:04', x:'Automated large-withdrawal alert triggered.'},
+      {t:'09:19:41', x:'On-call engineer acknowledges the page.', cls:'sys'},
+      {t:'09:26', x:'Withdrawal confirmed on the destination chain.'},
+      {t:'09:44', x:'Treasury completes reconciliation against scheduled operations: the withdrawal is not recognized.'}
+    ],
+    facts:[
+      ['Withdrawal amount','24,800 ETH equivalent','bad'],
+      ['Transaction status','Confirmed'],
+      ['Authorization','5 of 9 validator signatures','bad'],
+      ['Destination','Previously unseen address'],
+      ['Bridge','Operational'],
+      ['Confirmed user impact','Unknown']
+    ],
+    decision:{ id:'D1', prompt:'What is the immediate response priority?',
+      options:[
+        {id:'A', strongest:true, head:'Declare a critical incident and establish coordinated response',
+         sub:'Activate the incident process, name the owner, open a decision log, set an update rhythm, and ask the technical owner to assess emergency containment controls.',
+         effects:{commandDiscipline:3, factDiscipline:2, responseCoordination:2, stakeholderDiscipline:1},
+         consequence:'Authority, a single source of truth and a decision rhythm are established while facts are still forming. The technical owner assesses available containment controls without waiting for perfect information.'},
+        {id:'B', head:'Contact each validator operator before formally escalating',
+         sub:'Verify directly with all nine signing entities before declaring anything.',
+         effects:{responseCoordination:1, factDiscipline:1},
+         consequence:'Direct verification may provide useful information, but the response remains fragmented while a potentially active compromise continues.'},
+        {id:'C', head:'Investigate the destination address before declaring an incident',
+         sub:'Understand where the funds went before committing to a formal response.',
+         effects:{factDiscipline:1},
+         consequence:'On-chain intelligence is valuable, but it should not delay activation when an unauthorized high-value withdrawal has already been confirmed.'},
+        {id:'D', head:'Immediately announce publicly that the protocol has been hacked',
+         sub:'Get ahead of the story before anyone else breaks it.',
+         effects:{},
+         consequence:'Public acknowledgment may become necessary quickly, but declaring an unverified root cause before command, scope and facts are established creates avoidable information risk.'}
+      ]}
+  },
+  {
+    phase:'Command', time:'10:02 UTC',
+    injects:[
+      {t:'10:02', cls:'block', x:'INCIDENT UPDATE\nA second unauthorized withdrawal has been identified, also carrying valid validator signatures. The bridge is now paused by the technical response team.\n\nKnown: two unauthorized withdrawals · valid authorization · multiple signing entities may be affected · funds moving on the destination chain.\n\nUnknown: initial access route · number of compromised systems · attacker persistence · whether additional credentials are affected.'}
+    ],
+    facts:[
+      ['Unauthorized withdrawals','Two confirmed','bad'],
+      ['Authorization','Valid signatures on both','bad'],
+      ['Bridge','Paused by technical team'],
+      ['Initial access route','Unknown'],
+      ['Attacker persistence','Unknown'],
+      ['Funds','Moving on destination chain','bad']
+    ],
+    decision:{ id:'D2', prompt:'How should the response now be organized?',
+      options:[
+        {id:'A', head:'Ask the founder to coordinate all teams directly',
+         sub:'Keep everything flowing through the person with ultimate authority.',
+         effects:{commandDiscipline:1, stakeholderDiscipline:1},
+         consequence:'Senior leadership remains informed, but the founder quickly becomes the routing point for technical questions, investor requests, communications approvals and operational decisions.'},
+        {id:'B', strongest:true, head:'Establish defined parallel workstreams with named owners and a single decision rhythm',
+         sub:'Incident ownership · technical response · on-chain intelligence · legal · public comms · partners & exchanges · investors · community · decision log.',
+         effects:{commandDiscipline:3, responseCoordination:3, stakeholderDiscipline:2, factDiscipline:1, recoveryReadiness:1},
+         consequence:'Technical response stays owned by engineering and security specialists. Each expanding front of the incident has a named owner, and uncertainty is translated into decision-ready information on a fixed rhythm.'},
+        {id:'C', head:'Keep the response entirely within the engineering team until root cause is known',
+         sub:'Protect focus; deal with the outside world once the facts are settled.',
+         effects:{factDiscipline:1},
+         consequence:'Engineering maintains focus, but other time-sensitive work begins late. External speculation and stakeholder pressure continue while no one owns those workstreams.'},
+        {id:'D', head:'Immediately rotate every key and rebuild all validator infrastructure',
+         sub:'Assume total compromise and rebuild from zero, now.',
+         effects:{responseCoordination:1, recoveryReadiness:1},
+         consequence:'This may form part of technical containment, but infrastructure decisions should remain with the technical response team and account for evidence preservation, scope and potential attacker persistence.'}
+      ]}
+  },
+  {
+    phase:'Coordination', time:'11:45 UTC',
+    injects:[
+      {t:'10:15', x:'First external press enquiry received.'},
+      {t:'10:22', x:'A major ecosystem partner asks whether its integration is safe.'},
+      {t:'10:31', x:'A validator operator reports unusual administrative access.'},
+      {t:'10:40', x:'On-chain analysis shows the attacker splitting funds across multiple addresses.'},
+      {t:'10:46', x:'One destination cluster appears connected to known exchange infrastructure.'},
+      {t:'10:55', x:'A high-following social account claims the base blockchain itself has failed.', cls:'sys'},
+      {t:'11:03', x:'Support requests increase sharply.'},
+      {t:'11:15', x:'Two investors request direct calls with the founder.'},
+      {t:'11:30', x:'Public discussion of the bridge pause is now widespread.'}
+    ],
+    conditionals:[
+      {metric:'responseCoordination', op:'<', value:4,
+       inject:{t:'11:38', x:'Three different stakeholders have received conflicting descriptions of the incident.', cls:'sys'}},
+      {metric:'stakeholderDiscipline', op:'>=', value:3,
+       inject:{t:'11:38', x:'Exchange contacts have acknowledged the tracing package and escalated internally.', cls:'good'}}
+    ],
+    facts:[
+      ['Stolen assets','Moving across addresses','bad'],
+      ['Public speculation','Accelerating','bad'],
+      ['Exchanges','May be able to assist'],
+      ['Partners','Requesting guidance'],
+      ['Technical team','Focused on scope & containment'],
+      ['Press','Actively enquiring','bad']
+    ],
+    decision:{ id:'D3', prompt:'Where should response capacity be directed?',
+      options:[
+        {id:'A', head:'Put all available capacity into technical root-cause analysis',
+         sub:'Nothing matters more than understanding exactly what happened.',
+         effects:{factDiscipline:1},
+         consequence:'Root cause remains essential, but a major blockchain incident develops simultaneously across technical, financial, legal and public domains. The other fronts do not wait.'},
+        {id:'B', head:'Immediately send the attacker an on-chain bounty offer',
+         sub:'Open negotiation now, while the funds are still traceable.',
+         effects:{},
+         consequence:'Direct engagement may eventually be considered, but premature outreach can affect investigation, negotiation posture and legal strategy.'},
+        {id:'C', strongest:true, head:'Run parallel technical, on-chain intelligence, exchange, legal and communications workstreams with clear ownership',
+         sub:'Keep engineers on containment; give tracing, exchanges, legal and comms their own owners.',
+         effects:{responseCoordination:3, stakeholderDiscipline:3, factDiscipline:1, recoveryReadiness:1, commandDiscipline:1},
+         consequence:'Technical responders remain focused while separate owners handle asset tracing, exchange coordination, stakeholder updates and public information. A major protocol incident is not a single technical workstream.'},
+        {id:'D', head:'Publish all suspected attacker addresses immediately',
+         sub:'Let the community help track the funds in real time.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'Public blockchain intelligence can be useful, but unverified attribution or incomplete address clustering can introduce new risks. Coordination with specialist investigators and affected third parties should be deliberate.'}
+      ]}
+  },
+  {
+    phase:'Communications', time:'12:15 UTC',
+    injects:[
+      {t:'12:01', x:'Screenshots of the paused bridge are circulating widely.', cls:'sys'},
+      {t:'12:08', x:'A crypto news outlet publishes: "Atlas Protocol bridge halted amid exploit rumors."'}
+    ],
+    facts:[
+      ['Bridge status','Paused'],
+      ['Unauthorized withdrawals','Confirmed','bad'],
+      ['Root cause','Not confirmed'],
+      ['Technical scope','Under investigation'],
+      ['Public awareness','High','bad'],
+      ['User concern','Increasing','bad']
+    ],
+    decision:{ id:'D4', prompt:'What should Atlas communicate now?',
+      options:[
+        {id:'A', head:'Say nothing until the complete root cause is known',
+         sub:'No statement is safer than a wrong statement.',
+         effects:{factDiscipline:1},
+         consequence:'Investigation continues without public speculation from the team, but the information vacuum is filled by others.'},
+        {id:'B', strongest:true, head:'Publish confirmed facts, affected systems, protective actions, current unknowns and a clear next-update commitment',
+         sub:'What is confirmed · what is affected · what protective action was taken · what users should do · what remains under investigation · when the next update lands.',
+         effects:{factDiscipline:3, stakeholderDiscipline:3, commandDiscipline:1},
+         consequence:'Effective incident communication separates known facts from active hypotheses. It reduces uncertainty without forcing the investigation to reach conclusions before the evidence supports them.'},
+        {id:'C', head:'Confirm an investigation but avoid acknowledging known asset loss',
+         sub:'Acknowledge activity without confirming the damage.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'The message may initially seem safer, but withholding facts already established on-chain can reduce credibility when the discrepancy becomes obvious.'},
+        {id:'D', head:"Explain the team's leading root-cause theory",
+         sub:'Give people the most likely explanation now.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'The theory may ultimately prove correct, but publishing an unconfirmed explanation creates a public commitment that may need to be reversed as investigation develops.'}
+      ]}
+  },
+  {
+    phase:'Recovery', time:'Day 2 — 10:00 UTC',
+    conditionals:[
+      {metric:'factDiscipline', op:'<', value:5,
+       inject:{t:'12:40', x:'An internal speculation screenshot is circulating and being read as an official statement.', cls:'sys'}},
+      {metric:'factDiscipline', op:'>=', value:5,
+       inject:{t:'12:40', x:'Major outlets are now citing the official update as the authoritative account.', cls:'good'}}
+    ],
+    injects:[
+      {t:'13:30', x:'Forensic work identifies evidence consistent with a targeted social-engineering campaign.'},
+      {t:'15:10', x:'The affected validator environment has been isolated.'},
+      {t:'16:40', x:'The technical team has identified the likely compromise boundary but is still validating persistence risk.'},
+      {t:'18:30', x:'Working assessment: multiple signing credentials were compromised.'},
+      {t:'22:00', x:'User questions are shifting from "what happened?" to "are funds safe?" and "when will the bridge reopen?"'},
+      {t:'Day 2', cls:'block', x:'STATUS — DAY 2\nImmediate threat: contained. Bridge: paused. Working root cause: established. Replacement infrastructure: prepared. Independent assurance: incomplete. Reimbursement position: under executive consideration. Public pressure to reopen: increasing.'}
+    ],
+    facts:[
+      ['Immediate threat','Contained'],
+      ['Bridge','Paused'],
+      ['Working root cause','Established'],
+      ['Replacement infrastructure','Prepared'],
+      ['Independent assurance','Incomplete','bad'],
+      ['Pressure to reopen','Increasing','bad']
+    ],
+    decision:{ id:'D5', prompt:'What should define the recovery decision?',
+      options:[
+        {id:'A', head:'Reopen immediately because the identified weakness has been fixed',
+         sub:'The hole is patched. Every hour closed costs trust and volume.',
+         effects:{},
+         consequence:'Addressing the known weakness is necessary, but recovery requires confidence that the wider control environment, operating model and monitoring posture are ready.'},
+        {id:'B', head:'Put reopening to an immediate community vote',
+         sub:'Let governance decide when the bridge comes back.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'Governance may play a role in major strategic decisions, but operational security decisions should not be pushed into a public vote simply because leadership is under pressure.'},
+        {id:'C', head:'Reopen with smaller transaction limits',
+         sub:'Restore service carefully with caps on withdrawals.',
+         effects:{recoveryReadiness:1, stakeholderDiscipline:1},
+         consequence:'Reduced limits may form part of a recovery control framework, but limits alone do not establish that the incident boundary and redesigned security assumptions have been adequately tested.'},
+        {id:'D', strongest:true, head:'Complete independent assurance and define explicit reopening criteria before restoring service',
+         sub:'Remediation validated · access removed · key architecture reviewed · monitoring confirmed · emergency authority tested · external assurance · comms prepared · residual risk accepted by the incident owner.',
+         effects:{recoveryReadiness:3, commandDiscipline:2, factDiscipline:2, stakeholderDiscipline:2},
+         consequence:'Reopening follows evidence, not pressure. Explicit criteria, independent assurance and an accountable owner turn recovery from a hope into a decision.'}
+      ]}
+  }]
+},
+
+/* ================= SCENARIO 2 ================= */
+{
+  scenarioId:'oracle-failure-v1',
+  title:'The Oracle Failure',
+  org:'HELIOS LEND',
+  blurb:'A price feed deviates sharply from the market and a lending protocol begins liquidating users who did nothing wrong. The contracts are working exactly as coded. That is the problem.',
+  meta:'<b>Helios Lend</b> · lending market · ≈$310M TVL · external oracle network',
+  detectionNote:'Helios spots the deviation quickly because feed-deviation alerts exist. Without them, the first signal would have been furious users.',
+  steps:[
+  {
+    phase:'Activation', time:'14:29 UTC',
+    injects:[
+      {t:'14:03:12', x:'Feed-deviation alert: staked-asset price reporting 18% below external market venues.'},
+      {t:'14:06', x:'On-call engineer acknowledges and begins verifying against independent price sources.', cls:'sys'},
+      {t:'14:14', x:'First wave of liquidations executes against the deviating price.'},
+      {t:'14:26', x:'Risk team confirms: liquidations are firing against a price no external market supports.'}
+    ],
+    facts:[
+      ['Oracle price','−18% vs market venues','bad'],
+      ['Liquidations','Executing','bad'],
+      ['Root cause','Unknown: oracle vs market'],
+      ['Contracts','Functioning as coded'],
+      ['User losses','Accruing','bad'],
+      ['Feed provider','Not yet responding']
+    ],
+    decision:{ id:'D1', prompt:'What is the immediate response priority?',
+      options:[
+        {id:'A', head:'Contact the oracle provider and wait for their diagnosis',
+         sub:'It is their feed. Let them confirm the fault before acting.',
+         effects:{responseCoordination:1, factDiscipline:1},
+         consequence:'Provider input is essential, but waiting for another organization\'s diagnosis while users are being liquidated cedes control of the first hour.'},
+        {id:'B', head:'Assume the market move is real and keep monitoring',
+         sub:'Sharp moves happen. The protocol is doing its job.',
+         effects:{factDiscipline:1},
+         consequence:'Verifying before acting has merit, but multiple independent venues already contradict the feed. Watching a suspect price liquidate users is a decision in itself.'},
+        {id:'C', strongest:true, head:'Declare a critical incident and establish coordinated response',
+         sub:'Activate the incident process, name the owner, open a decision log, and ask the technical owner to assess emergency actions, including pausing liquidations if controls allow.',
+         effects:{commandDiscipline:3, factDiscipline:2, responseCoordination:2, stakeholderDiscipline:1},
+         consequence:'Authority and a single source of truth are established while the price discrepancy is still being diagnosed. The technical owner assesses whether liquidations can be safely paused.'},
+        {id:'D', head:'Post immediately that the oracle network has failed',
+         sub:'Users deserve to know who is at fault.',
+         effects:{},
+         consequence:'Public attribution of fault to a third party, before diagnosis, creates legal and relationship risk and may be wrong: the fault could sit in Helios\'s own feed configuration.'}
+      ]}
+  },
+  {
+    phase:'Command', time:'14:50 UTC',
+    injects:[
+      {t:'14:50', cls:'block', x:'INCIDENT UPDATE\nLiquidations paused by the technical team using the emergency guardian role. Roughly 2,300 positions were liquidated against the deviating price before the pause.\n\nKnown: feed deviated for 41 minutes · liquidations executed as coded · users lost collateral at off-market prices.\n\nUnknown: fault origin (provider vs configuration) · total user impact · whether the feed can be trusted on resume.'}
+    ],
+    facts:[
+      ['Liquidations','Paused via guardian'],
+      ['Affected positions','≈2,300','bad'],
+      ['Fault origin','Undetermined'],
+      ['User losses','Being quantified','bad'],
+      ['Feed status','Still deviating','bad'],
+      ['Provider','Now responding']
+    ],
+    decision:{ id:'D2', prompt:'How should the response now be organized?',
+      options:[
+        {id:'A', strongest:true, head:'Establish defined parallel workstreams with named owners and a single decision rhythm',
+         sub:'Incident ownership · technical diagnosis · provider liaison · affected-user data · legal · public comms · decision log.',
+         effects:{commandDiscipline:3, responseCoordination:3, stakeholderDiscipline:2, factDiscipline:1, recoveryReadiness:1},
+         consequence:'Diagnosis, provider coordination, loss quantification and communications each get a named owner. Leadership works a rhythm instead of a queue of interruptions.'},
+        {id:'B', head:'Ask the founder to coordinate all teams directly',
+         sub:'One person with full context and full authority.',
+         effects:{commandDiscipline:1, stakeholderDiscipline:1},
+         consequence:'Senior leadership stays informed, but the founder becomes the routing point for the provider, angry users, legal questions and press simultaneously.'},
+        {id:'C', head:'Keep the response inside engineering until the fault is isolated',
+         sub:'The rest can wait until we know what broke.',
+         effects:{factDiscipline:1},
+         consequence:'Engineering keeps focus, but user losses are already public and quantifiable. The organizational fronts of this incident are already live whether owned or not.'},
+        {id:'D', head:'Immediately switch to a different oracle provider',
+         sub:'Cut over now and resume operations.',
+         effects:{responseCoordination:1, recoveryReadiness:1},
+         consequence:'Feed architecture changes may be part of remediation, but a live cutover under pressure, without diagnosis, risks trading one failure mode for another.'}
+      ]}
+  },
+  {
+    phase:'Coordination', time:'16:20 UTC',
+    injects:[
+      {t:'15:05', x:'Affected users begin organizing in the community Discord.'},
+      {t:'15:18', x:'A liquidation bot operator is publicly defending the liquidations as legitimate.'},
+      {t:'15:30', x:'Provider preliminary finding: two of five feed sources went stale during a venue outage.'},
+      {t:'15:52', x:'Unofficial loss estimates circulating range from $4M to $40M.', cls:'sys'},
+      {t:'16:04', x:'First press enquiry: "Was this an exploit?"'},
+      {t:'16:12', x:'Two market makers ask whether Helios markets are safe to quote.'}
+    ],
+    conditionals:[
+      {metric:'responseCoordination', op:'<', value:4,
+       inject:{t:'16:17', x:'Three community moderators have given users three different explanations of what happened.', cls:'sys'}},
+      {metric:'stakeholderDiscipline', op:'>=', value:3,
+       inject:{t:'16:17', x:'The oracle provider has assigned a dedicated incident liaison and a joint timeline is being built.', cls:'good'}}
+    ],
+    facts:[
+      ['Working theory','Stale sources during venue outage'],
+      ['Loss estimates','Unverified, $4–40M range','bad'],
+      ['Community','Organising, angry','bad'],
+      ['Provider','Cooperating'],
+      ['Press','Framing as possible exploit','bad'],
+      ['Markets','Confidence wavering','bad']
+    ],
+    decision:{ id:'D3', prompt:'Where should response capacity be directed?',
+      options:[
+        {id:'A', head:'Promise full refunds now to calm the community',
+         sub:'Commit to making everyone whole before the numbers are final.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'A compensation commitment made before scope, causation and responsibility are established may be impossible to honour precisely as stated, and walking it back costs more trust than it bought.'},
+        {id:'B', strongest:true, head:'Run parallel diagnosis, loss-reconstruction, provider, legal and communications workstreams with clear ownership',
+         sub:'Engineers on the feed; a dedicated owner building the authoritative liquidation dataset; comms holding the information line.',
+         effects:{responseCoordination:3, stakeholderDiscipline:3, factDiscipline:1, recoveryReadiness:1, commandDiscipline:1},
+         consequence:'The authoritative loss dataset becomes the foundation for every later decision: communications, compensation and legal posture. One team owns it while others keep moving.'},
+        {id:'C', head:'Publicly assign blame to the oracle provider',
+         sub:'The preliminary finding points at them. Say so.',
+         effects:{},
+         consequence:'The finding is preliminary and the provider is cooperating. Public blame mid-incident risks the relationship that recovery depends on, and the configuration question is still open.'},
+        {id:'D', head:'Put all available capacity into the technical diagnosis',
+         sub:'Until the feed is understood, nothing else is decidable.',
+         effects:{factDiscipline:1},
+         consequence:'Diagnosis matters, but the loss dataset, user communications and provider coordination are all time-sensitive and none of them require the diagnosis to finish first.'}
+      ]}
+  },
+  {
+    phase:'Communications', time:'16:55 UTC',
+    injects:[
+      {t:'16:38', x:'A thread claiming "Helios insiders front-ran the liquidations" is gaining traction.', cls:'sys'},
+      {t:'16:47', x:'Support volume has tripled. Users are asking whether to repay, withdraw or wait.'}
+    ],
+    facts:[
+      ['Liquidations','Paused'],
+      ['Working theory','Stale feed sources'],
+      ['Loss dataset','In reconstruction'],
+      ['Speculation','Including insider claims','bad'],
+      ['User confusion','High: repay, withdraw or wait?','bad'],
+      ['Next protocol action','Undecided']
+    ],
+    decision:{ id:'D4', prompt:'What should Helios communicate now?',
+      options:[
+        {id:'A', head:'State that no user funds are at risk',
+         sub:'Reassure first. The protocol itself was never exploited.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'Technically the contracts were not exploited, but 2,300 users lost collateral. A reassurance that reads as denial of their losses will define the story more than the incident itself.'},
+        {id:'B', head:'Say nothing until the loss dataset is final',
+         sub:'Numbers first, statements second.',
+         effects:{factDiscipline:1},
+         consequence:'Precision has value, but the vacuum is being filled by insider-trading claims. Waiting for perfect numbers surrenders the narrative at its most volatile moment.'},
+        {id:'C', strongest:true, head:'Publish confirmed facts, protective guidance, current unknowns and a clear next-update commitment',
+         sub:'What happened · what was paused and when · what affected users should and should not do · what is being reconstructed · when the next update lands.',
+         effects:{factDiscipline:3, stakeholderDiscipline:3, commandDiscipline:1},
+         consequence:'Users get actionable guidance, the insider claim is met with a factual timeline, and the commitment to a next update gives everyone a reason to stop refreshing rumors.'},
+        {id:'D', head:'Publish the preliminary provider finding as the explanation',
+         sub:'Share the leading theory: stale sources during a venue outage.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'The theory may hold, but it is one preliminary finding from one party. If configuration turns out to share fault, the early explanation will read as blame-shifting.'}
+      ]}
+  },
+  {
+    phase:'Recovery', time:'Day 2 — 09:00 UTC',
+    conditionals:[
+      {metric:'factDiscipline', op:'<', value:5,
+       inject:{t:'18:20', x:'The insider-trading thread is now being cited by a mainstream outlet.', cls:'sys'}},
+      {metric:'factDiscipline', op:'>=', value:5,
+       inject:{t:'18:20', x:'The published timeline has largely displaced the insider-trading claim from the conversation.', cls:'good'}}
+    ],
+    injects:[
+      {t:'18:45', x:'Joint finding with provider: two stale sources plus a Helios-side deviation threshold set too wide.'},
+      {t:'20:30', x:'Authoritative loss dataset complete: $11.2M across 2,304 positions.'},
+      {t:'21:15', x:'Legal review of compensation options underway.'},
+      {t:'22:40', x:'Community sentiment stabilising; pressure shifting to "when do markets resume?"'},
+      {t:'Day 2', cls:'block', x:'STATUS — DAY 2\nMarkets: paused. Root cause: confirmed, shared fault. Losses: quantified at $11.2M. Compensation framework: drafted, unfunded decisions pending. Feed remediation: designed, not yet reviewed. Pressure to resume: increasing.'}
+    ],
+    facts:[
+      ['Root cause','Confirmed: shared fault'],
+      ['Losses','$11.2M quantified'],
+      ['Compensation','Framework drafted'],
+      ['Feed remediation','Designed, unreviewed','bad'],
+      ['Markets','Paused'],
+      ['Pressure to resume','Increasing','bad']
+    ],
+    decision:{ id:'D5', prompt:'What should define the path back to normal operation?',
+      options:[
+        {id:'A', head:'Resume markets now with the remediated feed',
+         sub:'The fault is understood and fixed. Reopen.',
+         effects:{},
+         consequence:'The specific fault is fixed, but the remediation is unreviewed and the compensation position unresolved. Resuming into an unsettled community invites a second crisis.'},
+        {id:'B', strongest:true, head:'Independent review of the feed remediation plus explicit resumption criteria, with the compensation decision made and announced first',
+         sub:'Feed architecture reviewed · thresholds validated · monitoring confirmed · compensation position stated · resumption criteria published · residual risk accepted by the incident owner.',
+         effects:{recoveryReadiness:3, commandDiscipline:2, factDiscipline:2, stakeholderDiscipline:2},
+         consequence:'Resumption follows evidence and lands with the compensation question answered, so the reopening story is about restored trust rather than unresolved losses.'},
+        {id:'C', head:'Resume with conservative parameters only',
+         sub:'Lower LTVs and tighter thresholds, then loosen over time.',
+         effects:{recoveryReadiness:1, stakeholderDiscipline:1},
+         consequence:'Conservative parameters can be part of the framework, but they do not validate the remediation itself, and they leave the compensation question hanging over the reopening.'},
+        {id:'D', head:'Put the compensation decision to an immediate token-holder vote',
+         sub:'Let governance own the hardest question.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'Governance may ratify the framework, but pushing an unshaped compensation question to a vote under pressure outsources a leadership decision at its most sensitive moment.'}
+      ]}
+  }]
+},
+
+/* ================= SCENARIO 3 ================= */
+{
+  scenarioId:'governance-attack-v1',
+  title:'The Governance Attack',
+  org:'MERIDIAN DAO',
+  blurb:'A proposal that passed quorum overnight contains an obfuscated payload pointing the treasury at an unknown address. The timelock executes in 46 hours. The clock is the incident.',
+  meta:'<b>Meridian DAO</b> · DeFi protocol · ≈$220M treasury · on-chain governance, 48h timelock',
+  detectionNote:'Meridian catches the payload because proposal-monitoring exists and someone reads execution calldata. Attacks like this succeed most often when nobody is watching the queue.',
+  steps:[
+  {
+    phase:'Activation', time:'04:20 UTC',
+    injects:[
+      {t:'03:41:07', x:'Proposal MP-114 has passed quorum and entered the execution timelock.'},
+      {t:'03:58', x:'Automated calldata review flags an unverified external call in the payload.', cls:'sys'},
+      {t:'04:11', x:'A core contributor confirms: the payload redirects treasury streaming to an unknown address.'},
+      {t:'04:17', x:'Voting analysis: quorum was reached through a sudden accumulation of borrowed voting power.'}
+    ],
+    facts:[
+      ['Proposal MP-114','Passed, in timelock','bad'],
+      ['Payload','Redirects treasury streams','bad'],
+      ['Timelock executes','T-minus 46 hours','bad'],
+      ['Voting power','Largely borrowed'],
+      ['Attacker identity','Unknown'],
+      ['Treasury exposure','≈$220M']
+    ],
+    decision:{ id:'D1', prompt:'What is the immediate response priority?',
+      options:[
+        {id:'A', head:'Message the largest delegates individually and quietly',
+         sub:'Build a counter-coalition before anything is formalised.',
+         effects:{responseCoordination:1, stakeholderDiscipline:1},
+         consequence:'Delegate outreach will matter, but quiet one-to-one conversations without an established incident structure produce fragmented, inconsistent accounts of the threat.'},
+        {id:'B', head:'Quietly accumulate tokens to outvote the proposal',
+         sub:'Fight voting power with voting power.',
+         effects:{},
+         consequence:'Market operations by insiders during an undisclosed incident create serious legal and reputational exposure, and the attacker can borrow more.'},
+        {id:'C', strongest:true, head:'Declare a critical incident and establish coordinated response',
+         sub:'Activate the incident process, name the owner, open a decision log, and ask the technical owner to enumerate every defensive option the governance design allows: guardian veto, cancellation, counter-proposal.',
+         effects:{commandDiscipline:3, factDiscipline:2, responseCoordination:2, stakeholderDiscipline:1},
+         consequence:'The response starts from a verified reading of the payload and a complete map of defensive options with their deadlines. 46 hours is enough time if it is spent deliberately.'},
+        {id:'D', head:'Tweet immediately that Meridian is under governance attack',
+         sub:'Wake the community up before the attacker consolidates.',
+         effects:{},
+         consequence:'The community will need to know soon, but an unstructured alarm before options are mapped invites panic selling, copycat borrowing and a market event on top of a governance event.'}
+      ]}
+  },
+  {
+    phase:'Command', time:'05:05 UTC',
+    injects:[
+      {t:'05:05', cls:'block', x:'INCIDENT UPDATE\nDefensive options confirmed by the technical team: guardian veto (multisig, 6-of-9, never used in production) · community counter-vote (requires quorum in 40h) · emergency pause of the streaming contract (affects legitimate recipients).\n\nKnown: payload verified malicious · voting power borrowed via two lending markets.\n\nUnknown: attacker identity · whether further proposals are queued · whether guardian signers are all reachable.'}
+    ],
+    facts:[
+      ['Defensive options','Three, each with costs'],
+      ['Guardian veto','6-of-9, untested in production','bad'],
+      ['Counter-vote window','40 hours'],
+      ['Guardian signers','Reachability unconfirmed','bad'],
+      ['Further proposals','Unknown'],
+      ['Market','Not yet aware']
+    ],
+    decision:{ id:'D2', prompt:'How should the response now be organized?',
+      options:[
+        {id:'A', head:'Keep it inside the core team until the veto is ready',
+         sub:'Every additional person told is a leak risk.',
+         effects:{factDiscipline:1},
+         consequence:'Operational security matters, but the counter-vote option dies without delegate coordination, and guardian signers scattered across timezones need structured contact now.'},
+        {id:'B', strongest:true, head:'Establish defined parallel workstreams with named owners and a single decision rhythm',
+         sub:'Incident ownership · technical/guardian readiness · delegate coordination · legal · exchanges (borrowed tokens) · communications · decision log.',
+         effects:{commandDiscipline:3, responseCoordination:3, stakeholderDiscipline:2, factDiscipline:1, recoveryReadiness:1},
+         consequence:'Guardian readiness, delegate outreach, lending-market liaison and communications proceed in parallel against a hard deadline, with one rhythm deciding what happens when.'},
+        {id:'C', head:'Ask the founder to personally call every guardian signer and delegate',
+         sub:'This needs the weight of the founder behind it.',
+         effects:{commandDiscipline:1, stakeholderDiscipline:1},
+         consequence:'Founder involvement helps with key relationships, but a single caller working a list serially is slow, and everything else queues behind those calls.'},
+        {id:'D', head:'Execute the emergency pause on the streaming contract now',
+         sub:'Freeze everything first, organize second.',
+         effects:{responseCoordination:1, recoveryReadiness:1},
+         consequence:'The pause is a real option, but it damages legitimate recipients and burns a one-shot defensive tool before the cheaper options are exhausted. Sequencing is the technical owner\'s call within a plan.'}
+      ]}
+  },
+  {
+    phase:'Coordination', time:'09:30 UTC',
+    injects:[
+      {t:'06:10', x:'Seven of nine guardian signers confirmed reachable; two unresponsive overnight.'},
+      {t:'07:02', x:'A governance analyst publicly flags MP-114 as suspicious.', cls:'sys'},
+      {t:'07:45', x:'Borrow rates for the governance token are spiking on both lending markets.'},
+      {t:'08:20', x:'Large delegates are asking privately whether the DAO has a plan.'},
+      {t:'08:56', x:'First press enquiry: "Is the Meridian treasury being drained?"'},
+      {t:'09:15', x:'The attacker\'s address begins moving borrowed tokens back toward the lending markets.'}
+    ],
+    conditionals:[
+      {metric:'responseCoordination', op:'<', value:4,
+       inject:{t:'09:24', x:'Two delegates have published contradictory accounts of what MP-114 does.', cls:'sys'}},
+      {metric:'stakeholderDiscipline', op:'>=', value:3,
+       inject:{t:'09:24', x:'Both lending markets have acknowledged the situation and are reviewing the borrowed positions.', cls:'good'}}
+    ],
+    facts:[
+      ['Guardian signers','7 of 9 reachable','bad'],
+      ['Public awareness','Beginning','bad'],
+      ['Borrow rates','Spiking'],
+      ['Delegates','Asking for a plan'],
+      ['Attacker','Unwinding borrow positions'],
+      ['Timelock','T-minus 41 hours','bad']
+    ],
+    decision:{ id:'D3', prompt:'Where should response capacity be directed?',
+      options:[
+        {id:'A', strongest:true, head:'Run parallel guardian-readiness, delegate, lending-market, legal and communications workstreams with clear ownership',
+         sub:'Rehearse the veto with reachable signers; brief delegates from one script; coordinate with both lending markets; prepare the public statement.',
+         effects:{responseCoordination:3, stakeholderDiscipline:3, factDiscipline:1, recoveryReadiness:1, commandDiscipline:1},
+         consequence:'The veto is rehearsed rather than hoped for, delegates speak from one factual script, and the lending markets become part of the defense rather than bystanders.'},
+        {id:'B', head:'Focus everything on reaching the two missing guardian signers',
+         sub:'Without 6-of-9 nothing else matters.',
+         effects:{factDiscipline:1},
+         consequence:'Signer reachability is critical, but seven are already confirmed: one more than needed. The counter-vote, delegates and markets still need owners while the search continues.'},
+        {id:'C', head:'Publicly identify the wallet you believe is behind the attack',
+         sub:'Name the attacker and let the community apply pressure.',
+         effects:{},
+         consequence:'Attribution is unverified and the address may be an intermediary. Public accusation mid-incident risks legal exposure and tips your read of the situation to the attacker.'},
+        {id:'D', head:'Open negotiation with the attacker address on-chain',
+         sub:'Offer a bounty for withdrawing the proposal.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'Negotiation may become relevant, but opening it before the veto is rehearsed reveals your defensive posture is uncertain and sets a price on attacking Meridian.'}
+      ]}
+  },
+  {
+    phase:'Communications', time:'10:40 UTC',
+    injects:[
+      {t:'10:05', x:'The governance analyst\'s thread on MP-114 is now widely shared.', cls:'sys'},
+      {t:'10:22', x:'Token price down 9%. Exchanges ask whether withdrawals of the token should be monitored.'}
+    ],
+    facts:[
+      ['MP-114','Publicly identified as suspicious','bad'],
+      ['Token price','−9%','bad'],
+      ['Veto readiness','Rehearsed, 7 signers'],
+      ['Counter-vote','Organising'],
+      ['Official statement','None yet','bad'],
+      ['Timelock','T-minus 39.5 hours','bad']
+    ],
+    decision:{ id:'D4', prompt:'What should Meridian communicate now?',
+      options:[
+        {id:'A', head:'Stay silent until the veto has executed',
+         sub:'Announce the save, not the danger.',
+         effects:{factDiscipline:1},
+         consequence:'A silent DAO during a publicly visible attack reads as an absent DAO. The analyst\'s thread becomes the official story by default.'},
+        {id:'B', head:'Reassure holders that the treasury is completely safe',
+         sub:'Project total confidence to stop the price slide.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'The veto is rehearsed but not executed, and two signers are still missing. A guarantee that events could still contradict is a hostage to fortune.'},
+        {id:'C', head:'Publish the full defensive playbook including veto timing',
+         sub:'Total transparency: every option, every deadline.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'Transparency has value, but publishing exact defensive timing hands the attacker a schedule to work against. Confirmed facts and intent, not operational detail.'},
+        {id:'D', strongest:true, head:'Publish confirmed facts, the protective intent, current unknowns and a clear next-update commitment',
+         sub:'What MP-114 does · that defensive options exist and are being executed · what token holders should not do · when the next update lands.',
+         effects:{factDiscipline:3, stakeholderDiscipline:3, commandDiscipline:1},
+         consequence:'The DAO takes ownership of the story with verified facts and visible intent, without publishing a schedule the attacker can exploit. The next-update commitment gives holders a reason to wait rather than sell.'}
+      ]}
+  },
+  {
+    phase:'Recovery', time:'Day 2 — 18:00 UTC',
+    conditionals:[
+      {metric:'factDiscipline', op:'<', value:5,
+       inject:{t:'12:30', x:'A rumor that "the guardians are compromised too" is spreading unanswered.', cls:'sys'}},
+      {metric:'factDiscipline', op:'>=', value:5,
+       inject:{t:'12:30', x:'Coverage is now anchored to the official statement; the panic narrative is fading.', cls:'good'}}
+    ],
+    injects:[
+      {t:'14:00', x:'Guardian veto executed cleanly: 7 of 9 signatures. MP-114 cancelled.'},
+      {t:'14:25', x:'Attacker begins unwinding remaining positions at a loss.'},
+      {t:'16:10', x:'Token price recovering. Delegates publicly credit the coordinated response.'},
+      {t:'20:00', x:'Community calls growing to "fix governance so this cannot recur."'},
+      {t:'Day 2', cls:'block', x:'STATUS — DAY 2\nMP-114: cancelled. Treasury: intact. Attacker: withdrawn. Governance design weaknesses: exposed (borrowable quorum, untested guardian process, no proposal screening). Pressure for immediate reform: high.'}
+    ],
+    facts:[
+      ['MP-114','Cancelled'],
+      ['Treasury','Intact'],
+      ['Attacker','Withdrawn, at a loss'],
+      ['Governance weaknesses','Exposed','bad'],
+      ['Reform pressure','High','bad'],
+      ['Normal operations','Suspended pending review']
+    ],
+    decision:{ id:'D5', prompt:'The attack failed. What should define the return to normal governance?',
+      options:[
+        {id:'A', head:'Resume normal governance immediately',
+         sub:'The system worked. The veto is proof.',
+         effects:{},
+         consequence:'The veto worked once, with seven reachable signers and 46 hours of notice. Resuming unchanged means betting the treasury that the next attacker is equally considerate.'},
+        {id:'B', head:'Rush a package of governance changes to a vote this week',
+         sub:'Fix everything while the community demands it.',
+         effects:{stakeholderDiscipline:1, recoveryReadiness:1},
+         consequence:'Momentum is real, but governance redesign drafted in a week under emotional pressure tends to overcorrect, and rushed parameter changes are themselves an attack surface.'},
+        {id:'C', strongest:true, head:'Independent review of the governance design with explicit resumption criteria before normal operations resume',
+         sub:'Quorum and delegation model reviewed · proposal screening defined · guardian process tested and documented · emergency authority clarified · residual risk accepted by the DAO.',
+         effects:{recoveryReadiness:3, commandDiscipline:2, factDiscipline:2, stakeholderDiscipline:2},
+         consequence:'The near-miss is converted into a reviewed, tested governance design. Resumption follows criteria the community can see, not relief that the moment has passed.'},
+        {id:'D', head:'Hand the redesign entirely to a community working group with no deadline',
+         sub:'Legitimacy matters more than speed.',
+         effects:{stakeholderDiscipline:1},
+         consequence:'Community legitimacy matters, but an unbounded process leaves the exposed weaknesses live indefinitely, and the next attacker is not waiting for the working group.'}
+      ]}
+  }]
+}
+];
+
+/* ============================================================
+   ENGINE — generic across scenarios
+============================================================ */
+let state = null;
+let SC = null;
+const $ = id => document.getElementById(id);
+
+function computeMax(sc){
+  const max = {};
+  Object.keys(DIMENSIONS).forEach(d => max[d] = 0);
+  sc.steps.forEach(s => {
+    Object.keys(DIMENSIONS).forEach(d => {
+      let m = 0;
+      s.decision.options.forEach(o => { m = Math.max(m, o.effects[d]||0); });
+      max[d] += m;
+    });
+  });
+  return max;
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* picker */
+function renderPicker(){
+  $('scen-grid').innerHTML = SCENARIOS.map((s,i) =>
+    '<div class="scen-card"><div class="k">Scenario '+(i+1)+'</div><h3>'+s.title+'</h3>'+
+    '<p>'+s.blurb+'</p><div class="meta">'+s.meta+'</div>'+
+    '<button class="btn" onclick="startSim('+i+')">Take the seat</button></div>'
+  ).join('');
+}
+renderPicker();
+
+function startSim(idx){
+  SC = SCENARIOS[idx];
+  state = {
+    scenarioId: SC.scenarioId, startedAt: Date.now(), step: 0,
+    decisions: [], triggered: [], completed: false,
+    scores: {commandDiscipline:0, factDiscipline:0, responseCoordination:0, stakeholderDiscipline:0, recoveryReadiness:0}
+  };
+  track('simulation_started', {scenario_id: SC.scenarioId});
+  $('picker').style.display='none';
+  $('debrief').style.display='none';
+  $('sim').style.display='block';
+  $('clockbar').style.display='flex';
+  $('org-name').textContent = SC.org;
+  $('feed').innerHTML='';
+  window.scrollTo(0,0);
+  runStep();
+}
+
+function backToPicker(){
+  $('debrief').style.display='none';
+  $('sim').style.display='none';
+  $('clockbar').style.display='none';
+  $('picker').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function evalCond(c){
+  const v = state.scores[c.metric];
+  return c.op === '<' ? v < c.value : v >= c.value;
+}
+
+function addInject(inj, delay){
+  setTimeout(()=>{
+    const div = document.createElement('div');
+    div.className = 'inject' + (inj.cls ? ' ' + inj.cls : '');
+    div.innerHTML = '<div class="t">' + inj.t + '</div><div class="x"></div>';
+    div.querySelector('.x').textContent = inj.x;
+    $('feed').appendChild(div);
+    $('feed').scrollTop = $('feed').scrollHeight;
+    fieldPulse();                       // brand: each inject disturbs the field
+  }, delay);
+}
+
+function renderFacts(step){
+  $('facts').innerHTML = step.facts.map(f =>
+    '<div class="row"><span>'+f[0]+'</span><span class="'+(f[2]||'')+'">'+f[1]+'</span></div>'
+  ).join('');
+  $('sit-time').textContent = step.time;
+}
+
+function runStep(){
+  const step = SC.steps[state.step];
+  if(!step){ return endSim(); }
+  $('phase-chip').textContent = step.phase;
+  $('sim-time').textContent = step.time;
+  renderFacts(step);
+  $('decision').style.display='none';
+  $('waiting').style.display='flex';
+
+  let injects = [];
+  if(step.conditionals){
+    step.conditionals.forEach(c => {
+      if(evalCond(c)){ injects.push(c.inject); state.triggered.push(c.inject.x); }
+    });
+  }
+  injects = (step.injects || []).concat(injects);
+  injects.forEach((inj,i) => addInject(inj, 500 + i*650));
+  setTimeout(()=> showDecision(step), 500 + injects.length*650 + 500);
+}
+
+function showDecision(step){
+  const d = step.decision;
+  $('waiting').style.display='none';
+  const el = $('decision');
+  el.style.display='block';
+  const opts = shuffle(d.options);      // varied ordering every run
+  el.innerHTML =
+    '<div class="dq">Decision '+(state.step+1)+' of '+SC.steps.length+'</div>' +
+    '<h3>'+d.prompt+'</h3>' +
+    opts.map(o => '<button class="opt" data-id="'+o.id+'"><b>'+o.head+'</b><span>'+o.sub+'</span></button>').join('') +
+    '<div id="cq"></div>';
+  el.querySelectorAll('.opt').forEach(btn => { btn.onclick = () => choose(step, btn.dataset.id); });
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function choose(step, optId){
+  const d = step.decision;
+  const opt = d.options.find(o => o.id === optId);
+  for(const k in opt.effects){ state.scores[k] += opt.effects[k]; }
+  state.decisions.push({decisionId:d.id, optionId:optId, strongest:!!opt.strongest});
+  track('simulation_decision_completed', {
+    scenario_id: state.scenarioId, decision_id: d.id, selected_option: optId,
+    elapsed_real_time: Math.round((Date.now()-state.startedAt)/1000)
+  });
+  const el = $('decision');
+  el.querySelectorAll('.opt').forEach(b => {
+    b.disabled = true;
+    if(b.dataset.id === optId) b.classList.add('picked');
+  });
+  fieldPulse();
+  $('cq').innerHTML =
+    '<div class="consequence"><div class="ch">Commentary</div>'+opt.consequence+'</div>' +
+    '<div class="continue"><button class="btn" id="cont">'+
+    (state.step === SC.steps.length-1 ? 'View your debrief' : 'Continue')+'</button></div>';
+  $('cont').onclick = () => { state.step++; runStep(); };
+  $('cq').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/* ---------- debrief ---------- */
+function category(pct){
+  if(pct >= 80) return 'Strong';
+  if(pct >= 60) return 'Controlled';
+  if(pct >= 40) return 'Developing';
+  return 'Weak';
+}
+
+function endSim(){
+  state.completed = true;
+  track('simulation_completed', {scenario_id: state.scenarioId,
+    elapsed_real_time: Math.round((Date.now()-state.startedAt)/1000)});
+  $('sim').style.display='none';
+  $('clockbar').style.display='none';
+  $('debrief').style.display='block';
+  window.scrollTo(0,0);
+  fieldCalm();
+
+  $('db-sub').textContent = SC.title + ' — generated from your decisions across the first 48 hours.';
+
+  const max = computeMax(SC);
+  const dims = Object.keys(DIMENSIONS).map(k => {
+    const pct = Math.round(100 * state.scores[k] / max[k]);
+    return {key:k, name:DIMENSIONS[k], pct, cat:category(pct)};
+  });
+  const sorted = [...dims].sort((a,b)=>b.pct-a.pct);
+  const best = sorted[0], worst = sorted[sorted.length-1];
+
+  const d1 = state.decisions[0];
+  const open = d1 && d1.strongest
+    ? 'Early activation and clear ownership reduced fragmentation as the incident expanded. '
+    : 'Activation came a little later than the incident demanded, and the response spent its early phase catching up with events. ';
+  let complications = '';
+  if(state.triggered.length){
+    complications = '<p><b>Along the way:</b> ' + state.triggered.map(t=>'“'+t+'”').join(' · ') + '</p>';
+  }
+  $('db-profile').innerHTML =
+    '<p>' + open + DEBRIEF.strong[best.key] + '</p>' +
+    '<p>' + DEBRIEF.develop[worst.key] + '</p>' + complications;
+
+  $('db-dims').innerHTML = dims.map(d =>
+    '<div class="dim-row"><span class="name">'+d.name+'</span>'+
+    '<span class="bar"><i style="width:0" data-w="'+d.pct+'%"></i></span>'+
+    '<span class="cat '+d.cat+'">'+d.cat+'</span></div>'
+  ).join('');
+  setTimeout(()=>{ document.querySelectorAll('.bar i').forEach(i=> i.style.width = i.dataset.w); }, 100);
+}
+
+window.addEventListener('beforeunload', () => {
+  if(state && !state.completed){
+    track('simulation_abandoned', {scenario_id: state.scenarioId, at_step: state.step});
+  }
+});
+
+/* ============================================================
+   WEBGL FIELD — brand continuity with the homepage
+   Subtle full-page layer; each inject / decision ripples it.
+============================================================ */
+let fieldPulse = () => {}, fieldCalm = () => {};
+(function(){
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = document.getElementById('bgfield');
+  const gl = canvas.getContext('webgl', {antialias:true, alpha:true});
+  if(!gl){ canvas.style.display='none'; return; }
+
+  const vs = `attribute vec2 aPos; attribute float aAgit; uniform vec2 uRes; varying float vAgit;
+    void main(){ vec2 c=(aPos/uRes)*2.0-1.0; gl_Position=vec4(c.x,-c.y,0.,1.);
+      gl_PointSize=3.4+aAgit*3.6; vAgit=aAgit; }`;
+  const fs = `precision mediump float; varying float vAgit;
+    void main(){ vec2 c=gl_PointCoord-0.5; float d=length(c); if(d>0.5) discard;
+      float a=smoothstep(0.5,0.35,d);
+      vec3 ink=vec3(0.086,0.078,0.059); vec3 alert=vec3(0.788,0.216,0.173);
+      vec3 col=mix(ink,alert,clamp(vAgit*1.4,0.,1.));
+      gl_FragColor=vec4(col, a*(0.55+0.35*vAgit)); }`;
+  function sh(t,s){ const x=gl.createShader(t); gl.shaderSource(x,s); gl.compileShader(x); return x; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER,vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  const uRes=gl.getUniformLocation(prog,'uRes'), aPos=gl.getAttribLocation(prog,'aPos'), aAgit=gl.getAttribLocation(prog,'aAgit');
+
+  let W,H,N,home,pos,vel,agit;
+  const SPACING = 30;
+  function build(){
+    const DPR = Math.min(window.devicePixelRatio||1, 2);
+    W=canvas.clientWidth; H=canvas.clientHeight;
+    canvas.width=W*DPR; canvas.height=H*DPR;
+    gl.viewport(0,0,canvas.width,canvas.height); gl.uniform2f(uRes,W,H);
+    const cols=Math.ceil(W/SPACING)+1, rows=Math.ceil(H/SPACING)+1;
+    N=cols*rows;
+    home=new Float32Array(N*2); pos=new Float32Array(N*2);
+    vel=new Float32Array(N*2); agit=new Float32Array(N);
+    let i=0;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const x=c*SPACING+(r%2?SPACING*0.5:0), y=r*SPACING;
+      home[i*2]=x; home[i*2+1]=y; pos[i*2]=x; pos[i*2+1]=y; i++;
+    }
+  }
+  build();
+  window.addEventListener('resize', build);
+  const posBuf=gl.createBuffer(), agitBuf=gl.createBuffer();
+
+  let shocks = [];
+  fieldPulse = function(){
+    shocks.push({x: W*(0.2+Math.random()*0.6), y: H*(0.15+Math.random()*0.5), t:0, s:4.6});
+    if(shocks.length>4) shocks.shift();
+  };
+  fieldCalm = function(){ shocks = []; agit && agit.fill(0); };
+
+  function step(){
+    shocks.forEach(s => s.t += 11);
+    shocks = shocks.filter(s => s.t < Math.max(W,H)*1.1);
+    for(let i=0;i<N;i++){
+      const ix=i*2, iy=ix+1;
+      let x=pos[ix], y=pos[iy];
+      for(const s of shocks){
+        const dx=x-s.x, dy=y-s.y, sd=Math.hypot(dx,dy);
+        const band=Math.abs(sd-s.t);
+        if(band<40 && sd>0.5){
+          const f=(1-band/40)*s.s;
+          vel[ix]+=(dx/sd)*f; vel[iy]+=(dy/sd)*f;
+          agit[i]=Math.min(1, agit[i]+f*0.2);
+        }
+      }
+      vel[ix]+=(home[ix]-x)*0.028; vel[iy]+=(home[iy]-y)*0.028;
+      vel[ix]*=0.90; vel[iy]*=0.90;
+      pos[ix]=x+vel[ix]; pos[iy]=y+vel[iy];
+      agit[i]*=0.955;
+    }
+  }
+  function draw(){
+    gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.bindBuffer(gl.ARRAY_BUFFER,posBuf); gl.bufferData(gl.ARRAY_BUFFER,pos,gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
+    gl.bindBuffer(gl.ARRAY_BUFFER,agitBuf); gl.bufferData(gl.ARRAY_BUFFER,agit,gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(aAgit); gl.vertexAttribPointer(aAgit,1,gl.FLOAT,false,0,0);
+    gl.drawArrays(gl.POINTS,0,N);
+  }
+  (function loop(){ step(); draw(); requestAnimationFrame(loop); })();
+  setTimeout(()=> fieldPulse(), 800);
+  // gentle ambient pulse while the scenario picker is visible
+  setInterval(()=>{
+    const p = document.getElementById('picker');
+    if(p && p.style.display !== 'none') fieldPulse();
+  }, 5000);
+})();
+</script>
+
+</body>
+</html>
