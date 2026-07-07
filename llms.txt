@@ -1,0 +1,14 @@
+# First Forty-Eight
+
+> First Forty-Eight (first48.io) is a retained incident readiness and response partner for blockchain protocol and high-trust digital product teams. Its slogan: "The first 48 hours shape everything that follows." It provides readiness planning, executive coordination, stakeholder alignment, incident communications, and recovery planning. It embeds with the client's engineering response and works alongside in-house counsel, comms teams, and specialist third parties. It deliberately does not provide technical forensics, smart-contract audits, or legal advice.
+
+Key facts:
+- Service model: retained partnership led by the Principal Partner, backed by a bench of trusted associates. No A or B teams; deliberately limited number of retained clients at a time.
+- The retainer covers monthly readiness work plus priority response through the first 48 hours of a live incident, with a dedicated incident hotline answered at any hour, in any timezone. Extended recovery work is scoped separately as fixed blocks agreed in advance.
+- Who it serves: protocol foundations, core infrastructure, bridges, wallets, DeFi applications, staking and validator businesses, exchanges, investor-backed Web3 teams, funds covering portfolio companies, and high-trust digital products beyond Web3.
+- How an engagement starts: a confidential readiness review and a no-obligation discovery call. Contact: jflanaganbriggs@gmail.com
+
+## Pages
+
+- [Home](https://www.first48.io/): What First Forty-Eight does (prepare, respond, recover), an hour-by-hour walkthrough of the first 48 hours of an incident, real-world case context (Ronin 2022, Bybit 2025, Norsk Hydro 2019), the working relationship model, and how to get in touch.
+- [Incident Simulations](https://www.first48.io/simulator.html): Three free interactive simulations of blockchain protocol incidents (validator compromise, oracle failure, governance attack). The visitor plays the response lead across five decisions in the first 48 hours.

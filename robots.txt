@@ -1,0 +1,29 @@
+# first48.io — all crawlers welcome, including AI search and answer engines.
+
+User-agent: *
+Allow: /
+
+# AI search / answer engines (citation crawlers)
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# AI training crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://www.first48.io/sitemap.xml
