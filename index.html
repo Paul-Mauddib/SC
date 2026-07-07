@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Forty-Eight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f5f1e9;
+    --paper-2:#ede8dc;
+    --card:#faf7f0;
+    --ink:#16140f;
+    --dim:#7d786c;
+    --line:#dcd6c8;
+    --alert:#c9372c;
+    --shadow:0 1px 2px rgba(22,20,15,.05),0 12px 32px rgba(22,20,15,.07);
+    --shadow-lift:0 2px 4px rgba(22,20,15,.06),0 20px 48px rgba(22,20,15,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 40px}
+
+  /* subtle paper grain */
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.35;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.53 0 0 0 0 0.47 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+  /* frozen frosted header */
+  nav{position:fixed;top:0;left:0;right:0;z-index:40;background:rgba(245,241,233,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(220,214,200,.7);transition:box-shadow .3s}
+  nav.scrolled{box-shadow:0 8px 30px rgba(22,20,15,.07)}
+  .nav-in{max-width:1140px;margin:0 auto;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:72px}
+  .logo{font-weight:600;font-size:16px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  .logo .mark{width:26px;height:26px;flex:0 0 auto}
+  .nav-links{display:flex;gap:34px;font-size:14.5px;font-weight:500;color:var(--dim)}
+  .nav-links a{position:relative;padding:4px 0;transition:color .25s}
+  .nav-links a::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--ink);transition:width .3s;border-radius:2px}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a:hover::after,.nav-links a.active::after{width:100%}
+  .nav-links a.active{color:var(--ink)}
+  .btn{display:inline-block;background:var(--ink);color:var(--paper);padding:13px 26px;font-size:14.5px;font-weight:500;border-radius:999px;transition:transform .25s,box-shadow .25s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(22,20,15,.22)}
+  .btn-line{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  .btn-line:hover{box-shadow:0 12px 28px rgba(22,20,15,.12)}
+
+  /* hero */
+  .hero{position:relative;height:100vh;min-height:660px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+  #field{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  .hero::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 55% at 50% 46%, rgba(245,241,233,.88) 0%, rgba(245,241,233,.45) 55%, rgba(245,241,233,0) 100%)}
+  .hero-in{position:relative;z-index:2;pointer-events:none;max-width:840px;padding:0 32px}
+  .hero-in .btn{pointer-events:auto}
+  .label{font-size:12px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:30px}
+  h1{font-size:clamp(38px,5.6vw,68px);font-weight:600;letter-spacing:-.03em;line-height:1.04}
+  .hero-sub{color:var(--dim);font-size:19px;max-width:44ch;margin:28px auto 40px}
+
+  section{padding:120px 0}
+  .band{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .sec-label{font-size:12px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:24px;display:flex;align-items:center;gap:12px}
+  .sec-label::before{content:"";width:26px;height:2px;background:var(--alert);border-radius:2px}
+  h2{font-size:clamp(28px,3.6vw,42px);font-weight:600;letter-spacing:-.025em;line-height:1.12;max-width:24ch}
+  .lede{color:var(--dim);font-size:18px;max-width:58ch;margin-top:22px}
+  .lede b{color:var(--ink);font-weight:500}
+
+  /* reveal on scroll */
+  .rv{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.6,.2,1),transform .7s cubic-bezier(.2,.6,.2,1)}
+  .rv.in{opacity:1;transform:none}
+  .rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
+
+  /* pillars: cards with icons */
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px}
+  .pillar{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:38px 34px;box-shadow:var(--shadow);transition:transform .35s cubic-bezier(.2,.6,.2,1),box-shadow .35s}
+  .pillar:hover{transform:translateY(-6px);box-shadow:var(--shadow-lift)}
+  .pillar .icon{width:44px;height:44px;margin-bottom:24px;color:var(--ink)}
+  .pillar .icon svg{width:100%;height:100%}
+  .pillar .step{font-size:12px;font-weight:600;letter-spacing:.18em;color:var(--alert);margin-bottom:8px}
+  .pillar h3{font-size:19px;font-weight:600;letter-spacing:-.01em;margin-bottom:12px}
+  .pillar p{color:var(--dim);font-size:15.5px;margin-bottom:14px}
+  .pillar ul{list-style:none}
+  .pillar li{font-size:14.5px;color:var(--dim);padding:8px 0 8px 22px;border-top:1px solid var(--line);position:relative}
+  .pillar li::before{content:"";position:absolute;left:2px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--alert)}
+
+  /* timeline */
+  .tl{margin-top:70px;position:relative}
+  .tl::before{content:"";position:absolute;left:97px;top:6px;bottom:6px;width:1px;background:var(--line)}
+  .entry{display:grid;grid-template-columns:76px 42px 1fr;padding:26px 0;align-items:start}
+  .entry .t{font-size:14px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right;padding-top:2px}
+  .entry .node{position:relative}
+  .entry .node::before{content:"";position:absolute;left:18px;top:8px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:2px solid var(--ink)}
+  .entry.alert .node::before{background:var(--alert);border-color:var(--alert);box-shadow:0 0 0 6px rgba(201,55,44,.12)}
+  .entry .body{max-width:60ch}
+  .entry h3{font-size:17px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px}
+  .entry p{color:var(--dim);font-size:15.5px}
+  .entry p b{color:var(--ink);font-weight:500}
+
+  .aside-quote{display:grid;grid-template-columns:118px 1fr;padding:34px 0}
+  .aside-quote .inner{border-left:2px solid var(--alert);padding:6px 0 6px 28px;max-width:56ch}
+  .aside-quote p{font-size:18.5px;line-height:1.6;color:var(--ink);font-weight:400}
+  .aside-quote cite{display:block;margin-top:12px;font-size:12px;font-style:normal;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+
+  /* record cards */
+  .proof{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:70px}
+  .p-item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:36px 34px;box-shadow:var(--shadow);transition:transform .35s cubic-bezier(.2,.6,.2,1),box-shadow .35s}
+  .p-item:hover{transform:translateY(-6px);box-shadow:var(--shadow-lift)}
+  .p-item .stat{font-size:42px;font-weight:600;letter-spacing:-.03em;line-height:1}
+  .p-item .stat.bad{color:var(--alert)}
+  .p-item .cap{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:12px 0 14px}
+  .p-item p{color:var(--dim);font-size:15.5px}
+  .p-item p b{color:var(--ink);font-weight:500}
+
+  /* relationship */
+  .rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:60px}
+  .rel-item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:34px 32px;box-shadow:var(--shadow);transition:transform .35s cubic-bezier(.2,.6,.2,1),box-shadow .35s}
+  .rel-item:hover{transform:translateY(-6px);box-shadow:var(--shadow-lift)}
+  .rel-item h3{font-size:18px;font-weight:600;letter-spacing:-.01em;margin-bottom:10px;padding-left:20px;position:relative}
+  .rel-item h3::before{content:"";position:absolute;left:0;top:8px;width:8px;height:8px;border-radius:50%;background:var(--alert)}
+  .rel-item p{color:var(--dim);font-size:15.5px}
+
+  /* about */
+  .about-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:64px;margin-top:12px;align-items:start}
+  .about-p{color:var(--dim);font-size:16.5px;margin-top:22px;max-width:58ch}
+  .about-p:first-of-type{margin-top:28px}
+  .cred-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:36px 34px;box-shadow:var(--shadow)}
+  .cred-card h3{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+  .cred-card ul{list-style:none}
+  .cred-card li{padding:16px 0;border-top:1px solid var(--line);font-size:14.5px;color:var(--dim)}
+  .cred-card li:first-child{border-top:none}
+  .cred-card li b{display:block;color:var(--ink);font-weight:600;font-size:15.5px;margin-bottom:2px}
+  .cred-card .cred-note{font-size:13px;color:var(--dim);margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+
+  .contact{text-align:center;padding:140px 0}
+  .contact h2{margin:0 auto 22px}
+  .contact p{color:var(--dim);max-width:46ch;margin:0 auto 40px}
+  .contact .row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .contact .quiet{font-size:13.5px;color:var(--dim);margin-top:26px}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;font-size:13px;color:var(--dim);position:relative;z-index:2}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+  @media(max-width:880px){
+    .three,.proof,.rel-grid,.about-grid{grid-template-columns:1fr}
+    .wrap,.nav-in{padding:0 24px}
+    .nav-links{display:none}
+    .hero-sub{font-size:17px}
+    .tl::before{left:21px}
+    .entry{grid-template-columns:1fr;padding-left:48px;position:relative}
+    .entry .t{text-align:left;margin-bottom:4px}
+    .entry .node::before{left:-31px;top:-40px}
+    .aside-quote{grid-template-columns:1fr;padding-left:48px}
+  }
+</style>
+</head>
+<body>
+
+<nav id="nav"><div class="nav-in">
+  <a class="logo" href="#top">
+    <svg class="mark" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="13" cy="13" r="11" stroke="#16140f" stroke-width="2"/>
+      <path d="M13 7v6l4.2 2.5" stroke="#c9372c" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    First Forty-Eight
+  </a>
+  <div class="nav-links">
+    <a href="#approach">Approach</a>
+    <a href="#hours">The first 48</a>
+    <a href="#record">The record</a>
+    <a href="#relationship">Working together</a>
+    <a href="#about">About</a>
+  </div>
+  <a class="btn" href="#contact">Book a discovery call</a>
+</div></nav>
+
+<header class="hero" id="top">
+  <canvas id="field"></canvas>
+  <div class="hero-in">
+    <div class="label">Incident readiness &amp; response</div>
+    <h1>The first 48 hours shape everything that follows.</h1>
+    <p class="hero-sub">A retained response partner for protocol and product teams. Prepared before the incident. Beside you during it. Calm throughout.</p>
+    <a class="btn" href="#contact">Book a no-obligation discovery call</a>
+  </div>
+</header>
+
+<section id="approach"><div class="wrap">
+  <div class="sec-label rv">What we do</div>
+  <h2 class="rv">Three phases. One steady hand through all of them.</h2>
+  <p class="lede rv">A fully integrated response partner. We embed with your engineering response, <b>execute communications directly</b>, and work alongside your in-house counsel and comms team. Where specialists are needed, from forensics to external counsel, we bring vetted options and fold them into a single coherent response.</p>
+  <div class="three" style="margin-top:60px">
+    <div class="pillar rv d1">
+      <div class="icon"><svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="7" y="9" width="30" height="26" rx="3" stroke="currentColor" stroke-width="2"/>
+        <path d="M14 17h16M14 23h16M14 29h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="33" cy="31" r="6.5" fill="#f5f1e9" stroke="#c9372c" stroke-width="2"/>
+        <path d="M33 28v3.2l2 1.2" stroke="#c9372c" stroke-width="1.8" stroke-linecap="round"/>
+      </svg></div>
+      <div class="step">01</div>
+      <h3>Prepare</h3>
+      <p>Readiness is built in calm months, not crisis hours. We embed with your team so the plan exists before it's needed.</p>
+      <ul>
+        <li>Stakeholder map: who to reach, in what order</li>
+        <li>Communications playbook and holding statements</li>
+        <li>Activation criteria and approval paths</li>
+        <li>Quarterly tabletop rehearsal</li>
+      </ul>
+    </div>
+    <div class="pillar rv d2">
+      <div class="icon"><svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 24h8l4-12 6 22 5-16 3 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="22" cy="34" r="2.4" fill="#c9372c"/>
+      </svg></div>
+      <div class="step">02</div>
+      <h3>Respond</h3>
+      <p>When something breaks, you activate a partner who already knows the business. We hold the rhythm while your team works the problem.</p>
+      <ul>
+        <li>Priority channel, direct to a senior operator</li>
+        <li>Every communication drafted, on cadence</li>
+        <li>A factual decision log from minute one</li>
+        <li>Leadership and engineers protected from noise</li>
+      </ul>
+    </div>
+    <div class="pillar rv d3">
+      <div class="icon"><svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M36 22a14 14 0 1 1-4.1-9.9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M36 8v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M17 22.5l3.5 3.5 6.5-7" stroke="#c9372c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg></div>
+      <div class="step">03</div>
+      <h3>Recover</h3>
+      <p>The incident ends. The story doesn't. We turn the response into a record that rebuilds trust rather than eroding it.</p>
+      <ul>
+        <li>Structured debrief: what was known, when</li>
+        <li>Postmortem and remediation narrative</li>
+        <li>Trust repair across users, investors, partners</li>
+        <li>Playbook updated with what was learned</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" id="hours"><div class="wrap">
+  <div class="sec-label rv">How it runs</div>
+  <h2 class="rv">An incident, hour by hour, with us in the room.</h2>
+  <p class="lede rv">Every incident is different. The rhythm is not. This is what the first 48 hours look like when the plan already exists and the person running it already knows your business.</p>
+
+  <div class="tl">
+    <div class="entry alert rv">
+      <div class="t">T+0:00</div><div class="node"></div>
+      <div class="body"><h3>Something breaks</h3>
+      <p>An exploit, an outage, a disclosure. Your team activates us on the pre-agreed channel. No introductions needed: we already know your product, your stakeholders, and who approves what.</p></div>
+    </div>
+    <div class="entry rv">
+      <div class="t">T+0:20</div><div class="node"></div>
+      <div class="body"><h3>One source of truth</h3>
+      <p>We open the situation log: what is confirmed, what is suspected, what is unknown. Every decision gets recorded from this point on. Speculation stays out of writing.</p></div>
+    </div>
+    <div class="entry rv">
+      <div class="t">T+0:45</div><div class="node"></div>
+      <div class="body"><h3>First statement out</h3>
+      <p>Built from the holding language we drafted months ago, approved through the path we agreed then. <b>Accurate, factual, and early enough to hold the narrative.</b></p></div>
+    </div>
+
+    <div class="aside-quote rv"><div></div><div class="inner">
+      <p>"Decisions made in the golden hour are the difference between holding the narrative and chasing one written by others."</p>
+      <cite>On the "golden hour" of crisis response, after Lukaszewski</cite>
+    </div></div>
+
+    <div class="entry rv">
+      <div class="t">T+3:00</div><div class="node"></div>
+      <div class="body"><h3>Stakeholders hear it from you</h3>
+      <p>Investor note prepared and sent. Partners and exchanges briefed in the right order. Community channels get a committed next-update time, and we hold to it.</p></div>
+    </div>
+    <div class="entry rv">
+      <div class="t">T+6:00</div><div class="node"></div>
+      <div class="body"><h3>Engineers stay on the problem</h3>
+      <p>Every ad hoc request for information routes through us, not the people doing containment. Leadership works a decision rhythm instead of a hundred pings.</p></div>
+    </div>
+    <div class="entry rv">
+      <div class="t">T+24:00</div><div class="node"></div>
+      <div class="body"><h3>Controlled updates, on schedule</h3>
+      <p>Audience-specific updates land when we said they would. A held cadence is what kills speculation: people stop refreshing feeds for news about you when they know when you'll speak next.</p></div>
+    </div>
+    <div class="entry rv">
+      <div class="t">T+48:00</div><div class="node"></div>
+      <div class="body"><h3>Recovery, on your terms</h3>
+      <p>Known facts aligned, remaining unknowns named, remediation narrative drafted, debrief scheduled. The postmortem people cite will be the one you wrote.</p></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="record"><div class="wrap">
+  <div class="sec-label rv">The record</div>
+  <h2 class="rv">Preparation is the difference. The public record proves it.</h2>
+  <div class="proof">
+    <div class="p-item rv d1">
+      <div class="stat bad">6 days</div>
+      <div class="cap">Ronin Network, 2022</div>
+      <p>$625 million gone, and nobody noticed. The theft was discovered by a user who couldn't withdraw, not by monitoring. Six days without facts, cadence, or a story of their own.</p>
+    </div>
+    <div class="p-item rv d2">
+      <div class="stat">30 min</div>
+      <div class="cap">Bybit, 2025</div>
+      <p>$1.5 billion stolen, the largest theft in crypto history. The CEO was speaking publicly within 30 minutes and withdrawals were restored in twelve hours. <b>Industry commentary called it textbook. The exchange survived.</b></p>
+    </div>
+    <div class="p-item rv d1">
+      <div class="stat">Day one</div>
+      <div class="cap">Norsk Hydro, 2019</div>
+      <p>Ransomware across 40 countries. Hydro admitted the breach the same day and ran daily public briefings, an approach it called "extreme transparency". It is now taught as the gold standard.</p>
+    </div>
+    <div class="p-item rv d2">
+      <div class="stat" style="font-size:26px;line-height:1.3">"Norsk Hydro set the example for the industry."</div>
+      <div class="cap">Eric Doerr, Microsoft</div>
+      <p>Responses like that aren't improvised courage. They are decisions made calmly, in advance, by people who thought about the first 48 hours before they arrived.</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" id="relationship"><div class="wrap">
+  <div class="sec-label rv">Working together</div>
+  <h2 class="rv">A deliberately simple relationship.</h2>
+  <p class="lede rv">To do this job well we have to be genuinely integrated: an extended set of resources for your team, not a vendor you call cold. The commercial model is designed to make that easy.</p>
+  <div class="rel-grid">
+    <div class="rel-item rv d1">
+      <h3>One retainer, one monthly fee</h3>
+      <p>No hourly meters, no surprise line items. Readiness work every month, priority support when something is live. Extended recovery work is scoped separately and only when it becomes substantial.</p>
+    </div>
+    <div class="rel-item rv d2">
+      <h3>Clear SLAs, agreed upfront</h3>
+      <p>A defined activation channel, who can trigger it, response commitments, and what the first response window covers. Written down at onboarding so there is no ambiguity at 2am.</p>
+    </div>
+    <div class="rel-item rv d1">
+      <h3>Embedded before anything happens</h3>
+      <p>Onboarding in the first 30 days: leadership context, technical orientation, channel review, stakeholder map. Then a monthly rhythm that keeps us current as your product and team change.</p>
+    </div>
+    <div class="rel-item rv d2">
+      <h3>Capacity protected by design</h3>
+      <p>We retain a small number of clients so that when you activate, you get full attention. A written triage protocol and a vetted specialist bench back that commitment.</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="about"><div class="wrap">
+  <div class="sec-label rv">About</div>
+  <div class="about-grid">
+    <div class="rv">
+      <h2>Founder-led, and built that way on purpose.</h2>
+      <p class="about-p">First Forty-Eight is run by its founder, and that is the product: senior judgment, already inside your business, on the other end of a priority channel. No account managers, no juniors learning on your incident.</p>
+      <p class="about-p">The practice draws on years running high-pressure product launches and operational environments at global scale, including telecoms at Vodafone, and deep working relationships across the Cardano and wider Web3 ecosystem: protocols, wallets, infrastructure teams, and the investors behind them.</p>
+      <p class="about-p">That mix matters. Incident response in this space fails when the responder understands communications but not how protocol teams, governance, and communities actually work. We speak both languages.</p>
+    </div>
+    <div class="cred-card rv d2">
+      <h3>Grounding</h3>
+      <ul>
+        <li><b>Operational scale</b>Years running high-pressure product launches and operations in global telecoms</li>
+        <li><b>Ecosystem depth</b>Working relationships across Cardano and wider Web3: protocols, wallets, infrastructure, investors</li>
+        <li><b>Professional development</b>Active accreditation across business continuity, crisis communications, and cybersecurity bodies</li>
+      </ul>
+      <p class="cred-note">Credentials support the work. Experience and preparation are the product.</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="contact band" id="contact"><div class="wrap">
+  <h2 class="rv">The plan is written now, or improvised then.</h2>
+  <p class="rv">Start with a confidential readiness debrief and a no-obligation discovery call. Capacity is deliberately limited to a small number of retained clients.</p>
+  <div class="row rv">
+    <a class="btn" href="mailto:jflanaganbriggs@gmail.com?subject=Discovery%20call%20request">Book a discovery call</a>
+    <a class="btn btn-line" href="mailto:jflanaganbriggs@gmail.com">jflanaganbriggs@gmail.com</a>
+  </div>
+  <p class="quiet rv">One integrated response: embedded with engineering, communications executed directly, working as one team with your counsel and specialists.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <div>First Forty-Eight</div>
+  <div>Retained response partner for protocol &amp; product teams</div>
+</div></footer>
+
+<script>
+// nav shadow + active anchor highlighting
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', ()=> nav.classList.toggle('scrolled', window.scrollY > 10));
+const links = document.querySelectorAll('.nav-links a');
+const secs = ['approach','hours','record','relationship','about','contact'].map(id=>document.getElementById(id));
+const secIO = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){
+    links.forEach(l=>l.classList.toggle('active', l.getAttribute('href')==='#'+e.target.id));
+  }});
+},{rootMargin:'-40% 0px -55% 0px'});
+secs.forEach(s=>secIO.observe(s));
+
+// scroll reveal
+const rio = new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){ e.target.classList.add('in'); rio.unobserve(e.target); }
+}),{threshold:.12});
+document.querySelectorAll('.rv').forEach(el=>rio.observe(el));
+
+// ---------- WebGL field ----------
+(function(){
+  const canvas = document.getElementById('field');
+  const gl = canvas.getContext('webgl', {antialias:true, alpha:true});
+  if(!gl){ canvas.style.display='none'; return; }
+
+  const vs = `
+    attribute vec2 aPos;
+    attribute float aAgit;
+    uniform vec2 uRes;
+    varying float vAgit;
+    void main(){
+      vec2 clip = (aPos / uRes) * 2.0 - 1.0;
+      gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+      gl_PointSize = 3.4 + aAgit * 4.0;
+      vAgit = aAgit;
+    }`;
+  const fs = `
+    precision mediump float;
+    varying float vAgit;
+    void main(){
+      vec2 c = gl_PointCoord - 0.5;
+      float d = length(c);
+      if(d > 0.5) discard;
+      float alpha = smoothstep(0.5, 0.35, d);
+      vec3 ink = vec3(0.086, 0.078, 0.059);
+      vec3 alert = vec3(0.788, 0.216, 0.173);
+      vec3 col = mix(ink, alert, clamp(vAgit*1.4, 0.0, 1.0));
+      gl_FragColor = vec4(col, alpha * (0.82 + 0.18*vAgit));
+    }`;
+  function sh(type, src){ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+  const uRes = gl.getUniformLocation(prog,'uRes');
+  const aPos = gl.getAttribLocation(prog,'aPos');
+  const aAgit = gl.getAttribLocation(prog,'aAgit');
+
+  let W, H, DPR, N, home, pos, vel, agit;
+  const SPACING = 26;
+
+  function build(){
+    DPR = Math.min(window.devicePixelRatio||1, 2);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = W*DPR; canvas.height = H*DPR;
+    gl.viewport(0,0,canvas.width,canvas.height);
+    gl.uniform2f(uRes, W, H);
+
+    const cols = Math.ceil(W/SPACING)+1, rows = Math.ceil(H/SPACING)+1;
+    N = cols*rows;
+    home = new Float32Array(N*2); pos = new Float32Array(N*2);
+    vel = new Float32Array(N*2); agit = new Float32Array(N);
+    let i=0;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const x = c*SPACING + (r%2 ? SPACING*0.5 : 0);
+      const y = r*SPACING;
+      home[i*2]=x; home[i*2+1]=y; pos[i*2]=x; pos[i*2+1]=y; i++;
+    }
+  }
+  build();
+  window.addEventListener('resize', build);
+
+  const posBuf = gl.createBuffer(), agitBuf = gl.createBuffer();
+
+  const mouse = {x:-9999,y:-9999,px:-9999,py:-9999,vx:0,vy:0};
+  canvas.addEventListener('mousemove', e=>{
+    const r = canvas.getBoundingClientRect();
+    mouse.px = mouse.x; mouse.py = mouse.y;
+    mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+    mouse.vx = mouse.x - mouse.px; mouse.vy = mouse.y - mouse.py;
+  });
+  canvas.addEventListener('mouseleave', ()=>{ mouse.x=-9999; mouse.y=-9999; });
+
+  let shock = null;
+  canvas.addEventListener('click', e=>{
+    const r = canvas.getBoundingClientRect();
+    shock = {x:e.clientX-r.left, y:e.clientY-r.top, t:0};
+  });
+  canvas.addEventListener('touchmove', e=>{
+    const r = canvas.getBoundingClientRect(); const t = e.touches[0];
+    mouse.px=mouse.x; mouse.py=mouse.y;
+    mouse.x=t.clientX-r.left; mouse.y=t.clientY-r.top;
+    mouse.vx=mouse.x-mouse.px; mouse.vy=mouse.y-mouse.py;
+  },{passive:true});
+  canvas.addEventListener('touchstart', e=>{
+    const r = canvas.getBoundingClientRect(); const t = e.touches[0];
+    shock = {x:t.clientX-r.left, y:t.clientY-r.top, t:0};
+  },{passive:true});
+
+  const SPRING = 0.028, DAMP = 0.90, MR = 110, MR2 = MR*MR;
+
+  function step(){
+    const mspeed = Math.min(Math.hypot(mouse.vx, mouse.vy), 40);
+    if(shock){ shock.t += 14; if(shock.t > Math.max(W,H)*1.2) shock = null; }
+
+    for(let i=0;i<N;i++){
+      const ix=i*2, iy=ix+1;
+      let x=pos[ix], y=pos[iy];
+
+      const dx = x-mouse.x, dy = y-mouse.y;
+      const d2 = dx*dx+dy*dy;
+      if(d2 < MR2 && d2 > 0.01){
+        const d = Math.sqrt(d2);
+        const f = (1 - d/MR) * (0.6 + mspeed*0.12);
+        vel[ix] += (dx/d)*f*2.4;
+        vel[iy] += (dy/d)*f*2.4;
+        agit[i] = Math.min(1, agit[i] + f*0.5);
+      }
+
+      if(shock){
+        const sdx = x-shock.x, sdy = y-shock.y;
+        const sd = Math.hypot(sdx,sdy);
+        const band = Math.abs(sd - shock.t);
+        if(band < 44 && sd > 0.5){
+          const f = (1 - band/44) * 5.0;
+          vel[ix] += (sdx/sd)*f;
+          vel[iy] += (sdy/sd)*f;
+          agit[i] = Math.min(1, agit[i] + f*0.22);
+        }
+      }
+
+      vel[ix] += (home[ix]-x)*SPRING;
+      vel[iy] += (home[iy]-y)*SPRING;
+      vel[ix] *= DAMP; vel[iy] *= DAMP;
+      pos[ix] = x + vel[ix]; pos[iy] = y + vel[iy];
+
+      agit[i] *= 0.955;
+    }
+  }
+
+  function draw(){
+    gl.clearColor(0,0,0,0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, agitBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, agit, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(aAgit);
+    gl.vertexAttribPointer(aAgit, 1, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.POINTS, 0, N);
+  }
+
+  (function loop(){ step(); draw(); requestAnimationFrame(loop); })();
+
+  setTimeout(()=>{ shock = {x:W*0.5, y:H*0.42, t:0}; }, 900);
+})();
+</script>
+
+</body>
+</html>
