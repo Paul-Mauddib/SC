@@ -58,7 +58,7 @@
 
   nav{position:sticky;top:0;z-index:20;background:rgba(245,241,233,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
   .nav-in{max-width:1080px;margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
-  .logo{font-weight:600;font-size:15px}
+  .logo{font-weight:600;font-size:15px;display:flex;align-items:center;gap:9px}
   .sim-clock{font-family:var(--mono);font-size:13px;color:var(--dim);display:flex;gap:14px;align-items:center}
   .sim-clock b{color:var(--ink);font-weight:600}
   .phase-chip{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--alert);border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--card)}
@@ -201,7 +201,14 @@
 <canvas id="bgfield"></canvas>
 
 <nav><div class="nav-in">
-  <a class="logo" href="https://first48.io">First Forty-Eight</a>
+  <a class="logo" href="https://first48.io">
+    <svg width="20" height="20" viewBox="0 0 26 26" fill="none" aria-label="First Forty-Eight mark">
+      <circle cx="13" cy="13" r="11" stroke="#16140f" stroke-width="2.2"/>
+      <path d="M13 13l6.4 3.7" stroke="#16140f" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M13 13l-5.5 3.2" stroke="#c9372c" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+    First Forty-Eight
+  </a>
   <div class="sim-clock" id="clockbar" style="display:none">
     <span class="scen" id="org-name"></span>
     <span class="phase-chip" id="phase-chip"></span>
@@ -242,6 +249,11 @@
 
 <!-- ============ DEBRIEF ============ -->
 <section id="debrief">
+  <svg width="40" height="40" viewBox="0 0 100 100" fill="none" style="margin-bottom:22px" aria-hidden="true">
+    <circle cx="50" cy="50" r="40" stroke="#16140f" stroke-width="7"/>
+    <path d="M50 50l24 14" stroke="#16140f" stroke-width="7" stroke-linecap="round"/>
+    <path d="M50 50l-20.5 12" stroke="#c9372c" stroke-width="7" stroke-linecap="round"/>
+  </svg>
   <div class="label">Incident debrief</div>
   <h1>Response profile</h1>
   <p class="sub" id="db-sub"></p>
